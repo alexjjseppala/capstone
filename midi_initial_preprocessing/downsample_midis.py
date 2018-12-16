@@ -2,6 +2,8 @@ from mido import MidiFile, MidiTrack, Message, merge_tracks
 from music21 import *
 import os
 
+#some nasty overhead, but it seems to work, I'll see how it does when doing a batch job
+
 directory = "midi_initial_preprocessing/src_midis"
 
 def downsample(filename):
@@ -33,14 +35,22 @@ def downsample(filename):
     percussion_track = merge_tracks(percussion_tracks)
     other_track = merge_tracks(other_tracks)
 
-    percussion_track = MidiTrack([msg for msg in percussion_track if msg.type == "note_on" or msg.type == "note_off"])
-    other_track = MidiTrack([msg for msg in other_track if msg.type == "note_on" or msg.type == "note_off"])
+    # percussion_track = MidiTrack([msg for msg in percussion_track if msg.type == "note_on" or msg.type == "note_off" or msg.type == "control_change"])
+    # other_track = MidiTrack([msg for msg in other_track if msg.type == "note_on" or msg.type == "note_off"])
         
     out_mid = MidiFile()
     out_mid.tracks = [other_track,percussion_track]
 
     #output to temp midi file
     out_mid.save('midi_initial_preprocessing/dst_midis/' + filename)
+    
+    parsed_midi = midi.MidiFile()
+    parsed_midi.open('midi_initial_preprocessing/dst_midis/' + filename, "rb")
+    parsed_midi.read()
+    parsed_midi.tracks[0].setChannel(2)
+    parsed_midi.open('midi_initial_preprocessing/dst_midis/' + filename, "wb")
+    parsed_midi.write()
+    parsed_midi.close()
 
 for filename in os.listdir(directory):
     if filename.endswith(".mid"):
