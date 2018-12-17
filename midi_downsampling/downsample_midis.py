@@ -4,10 +4,10 @@ import os
 
 #some nasty overhead, but it seems to work, I'll see how it does when doing a batch job
 
-directory = "midi_initial_preprocessing/src_midis"
+directory = "midi_downsampling/src_midis"
 
 def downsample(filename):
-    filepath = 'midi_initial_preprocessing/src_midis/' + filename
+    filepath = 'midi_downsampling/src_midis/' + filename
 
     parsed_midi = midi.MidiFile()
     parsed_midi.open(filepath, "rb")
@@ -38,19 +38,23 @@ def downsample(filename):
     # percussion_track = MidiTrack([msg for msg in percussion_track if msg.type == "note_on" or msg.type == "note_off" or msg.type == "control_change"])
     # other_track = MidiTrack([msg for msg in other_track if msg.type == "note_on" or msg.type == "note_off"])
         
+    for msg in other_track:
+        if hasattr(msg,"channel"):
+            msg.channel = 0
+
     out_mid = MidiFile()
     out_mid.tracks = [other_track,percussion_track]
 
     #output to temp midi file
-    out_mid.save('midi_initial_preprocessing/dst_midis/' + filename)
+    out_mid.save('midi_downsampling/dst_midis/' + filename)
     
-    parsed_midi = midi.MidiFile()
-    parsed_midi.open('midi_initial_preprocessing/dst_midis/' + filename, "rb")
-    parsed_midi.read()
-    parsed_midi.tracks[0].setChannel(2)
-    parsed_midi.open('midi_initial_preprocessing/dst_midis/' + filename, "wb")
-    parsed_midi.write()
-    parsed_midi.close()
+    # parsed_midi = midi.MidiFile()
+    # parsed_midi.open('midi_downsampling/dst_midis/' + filename, "rb")
+    # parsed_midi.read()
+    # parsed_midi.tracks[0].setChannel(2)
+    # parsed_midi.open('midi_downsampling/dst_midis/' + filename, "wb")
+    # parsed_midi.write()
+    # parsed_midi.close()
 
 for filename in os.listdir(directory):
     if filename.endswith(".mid"):
