@@ -15,6 +15,11 @@ def downsample(filename):
     parsed_midi.close()
     parsed_midi_tracks = parsed_midi.tracks
     #get channels for each track to find where the percussion track is (channel 10 music21 channel 9 mido)
+    
+    # parsed_midi = converter.parse(filepath)
+
+    # stream = instrument.partitionByInstrument(parsed_midi)
+    
     percussion_track_indexes = []
     for track in range(len(parsed_midi_tracks)):
         channels = parsed_midi_tracks[track].getChannels()

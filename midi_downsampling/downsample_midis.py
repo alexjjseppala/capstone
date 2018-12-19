@@ -1,67 +1,68 @@
-from mido import MidiFile, MidiTrack, Message, merge_tracks
 from music21 import *
 import os
+import time
+import sys
 
-#some nasty overhead, but it seems to work, I'll see how it does when doing a batch job
+#converts all midi files in the midi_downsampling/src_midis to simpler version (2 tracks, one piano one percussion)
+#and stores them into midi_downsampling/dst_midis
 
 directory = "midi_downsampling/src_midis"
 
 def downsample(filename):
-    filepath = 'midi_downsampling/src_midis/' + filename
+    filepath = "midi_downsampling/src_midis/" + filename
 
     parsed_midi = midi.MidiFile()
     parsed_midi.open(filepath, "rb")
     parsed_midi.read()
     parsed_midi.close()
     parsed_midi_tracks = parsed_midi.tracks
-    #get channels for each track to find where the percussion track is (channel 10 music21 channel 9 mido)
-    percussion_track_indexes = []
+
+    piano_tracks = []
+    percussion_tracks = []
     for track in range(len(parsed_midi_tracks)):
         channels = parsed_midi_tracks[track].getChannels()
-        if(10 in channels):
-            percussion_track_indexes.append(track)
-
-    mid = MidiFile(filepath)
-
-    other_tracks = []
-    percussion_tracks = []
-
-    for track in range(len(mid.tracks)):
-        if track in percussion_track_indexes:
-            percussion_tracks.append(mid.tracks[track])
+        if 10 in channels:
+            percussion_tracks.append(parsed_midi_tracks[track])
         else:
-            other_tracks.append(mid.tracks[track])
-        
-    percussion_track = merge_tracks(percussion_tracks)
-    other_track = merge_tracks(other_tracks)
-
-    # percussion_track = MidiTrack([msg for msg in percussion_track if msg.type == "note_on" or msg.type == "note_off" or msg.type == "control_change"])
-    # other_track = MidiTrack([msg for msg in other_track if msg.type == "note_on" or msg.type == "note_off"])
-        
-    for msg in other_track:
-        if hasattr(msg,"channel"):
-            msg.channel = 0
-
-    out_mid = MidiFile()
-    out_mid.tracks = [other_track,percussion_track]
-
-    #output to temp midi file
-    out_mid.save('midi_downsampling/dst_midis/' + filename)
+            piano_tracks.append(parsed_midi_tracks[track])
     
-    # parsed_midi = midi.MidiFile()
-    # parsed_midi.open('midi_downsampling/dst_midis/' + filename, "rb")
-    # parsed_midi.read()
-    # parsed_midi.tracks[0].setChannel(2)
-    # parsed_midi.open('midi_downsampling/dst_midis/' + filename, "wb")
-    # parsed_midi.write()
-    # parsed_midi.close()
+    outStream = stream.Stream()
+    piano_notes = []
+    percussion_notes = []
+    if len(piano_tracks) > 0:
+        piano_stream = midi.translate.midiTracksToStreams(piano_tracks)
+        piano_notes = piano_stream.flat.notes
+    if len(percussion_tracks) > 0:
+        percussion_stream = midi.translate.midiTracksToStreams(percussion_tracks)
+        percussion_notes = percussion_stream.flat.notes
+    
+    #in theory the normalization and training could be done here
+    #or this script could be run to pre-simplify the midi files first
 
-for filename in os.listdir(directory):
+    outStream.append(stream.Part(piano_notes))
+    outStream.append(stream.Part(percussion_notes))
+
+    outFile = midi.translate.streamToMidiFile(outStream)
+
+    outFile.tracks[0].setChannel(1)
+    outFile.tracks[1].setChannel(10)
+
+    outFile.open('midi_downsampling/dst_midis/' + filename, "wb")
+    outFile.write()
+    outFile.close()
+
+start = time.time()
+filenames = os.listdir(directory)
+total = len(filenames)
+count = 0
+for filename in filenames:
     if filename.endswith(".mid"):
+        count += 1
+        sys.stdout.write("\r" + str(count) + "/" + str(total))
+        sys.stdout.flush()
         downsample(filename)
         continue
     else:
         continue
-
-
-
+end = time.time()
+sys.stdout.write("\nDone!\nTime elapsed: " + str(end - start))
