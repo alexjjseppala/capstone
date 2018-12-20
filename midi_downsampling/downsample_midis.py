@@ -31,16 +31,22 @@ def downsample(filename):
     percussion_notes = []
     if len(piano_tracks) > 0:
         piano_stream = midi.translate.midiTracksToStreams(piano_tracks)
-        piano_notes = piano_stream.flat.notes
+        piano_notes = piano_stream.flat.notesAndRests
     if len(percussion_tracks) > 0:
         percussion_stream = midi.translate.midiTracksToStreams(percussion_tracks)
-        percussion_notes = percussion_stream.flat.notes
+        percussion_notes = percussion_stream.flat.notesAndRests
     
     #in theory the normalization and training could be done here
     #or this script could be run to pre-simplify the midi files first
 
     outStream.append(stream.Part(piano_notes))
     outStream.append(stream.Part(percussion_notes))
+
+    # outStream[0].chordify()
+    # outStream[1].chordify()
+
+    # outStream[0] = outStream[0].flat
+    # outStream[1] = outStream[1].flat
 
     outFile = midi.translate.streamToMidiFile(outStream)
 

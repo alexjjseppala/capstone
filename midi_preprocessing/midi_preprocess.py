@@ -5,31 +5,28 @@ directory = "midi_downsampling/dst_midis"
 
 for filename in os.listdir(directory):
     if filename.endswith(".mid"):
-        parsed_midi = midi.MidiFile()
-        parsed_midi.open('midi_downsampling/dst_midis/' + filename, "rb")
-        parsed_midi.read()
-        parsed_midi.close()
+        parsed_midi = converter.parse('midi_downsampling/dst_midis/' + filename)
 
-        # parts = instrument.partitionByInstrument(parsed_midi.tracks)
-        # print(parts)
+        #flat combines all voices(not sure why it wasnt fully flattened before, but had to move on)
+        #chordify combines all notes with same offset into a chord for each stream
+        #Note: appears that rests were dropped, should be fine since we have the offsets
+        piano_stream = parsed_midi[0].flat.chordify()
 
-        #this next part is currently reconstructing instead, just to make sure it can be rebuilt properly enough
-        piano_stream = midi.translate.midiTrackToStream(parsed_midi.tracks[0]).flat.notesAndRests
-        percussion_stream = midi.translate.midiTrackToStream(parsed_midi.tracks[1]).flat.notesAndRests
+        percussion_stream = parsed_midi[1].flat.chordify()
 
-        outStream = stream.Stream()
-        outStream.append(stream.Part(piano_stream))
-        outStream.append(stream.Part(percussion_stream))#try to make music21 detect this as a percussion part
-        # print("asdf")
-        # for piano_element in piano_stream:
-        #     print(piano_element)
-        # for percussion_element in percussion_stream:
-        #     print(percussion_element)
+        #NEXT STEP
+        # combine the piano stream and the percussion streams together
+        # and ensure that they sync up, this could use a design discussion regarding the format of the array
 
-        #writeback test
-        outStream.write('midi', fp='test_output.mid')
-        print("done")
-        
+        # Test printing
+        for i in range(len(piano_stream)):
+            print(piano_stream[i].offset)
+            print(piano_stream[i])
+        print("________________________________________________________________________________________________________________________________________________")
+        for i in range(len(percussion_stream)):
+            print(percussion_stream[i].offset)
+            print(percussion_stream[i])
+        print("tst")
         continue
     else:
         continue
