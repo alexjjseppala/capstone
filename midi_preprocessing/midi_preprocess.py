@@ -1,5 +1,6 @@
 from music21 import *
 import os
+import numpy as np
 
 directory = "midi_downsampling/dst_midis"
 
@@ -9,24 +10,30 @@ for filename in os.listdir(directory):
 
         #flat combines all voices(not sure why it wasnt fully flattened before, but had to move on)
         #chordify combines all notes with same offset into a chord for each stream
-        #Note: appears that rests were dropped, should be fine since we have the offsets
         piano_stream = parsed_midi[0].flat.chordify()
 
         percussion_stream = parsed_midi[1].flat.chordify()
 
-        #NEXT STEP
-        # combine the piano stream and the percussion streams together
-        # and ensure that they sync up, this could use a design discussion regarding the format of the array
+        #combine and sychronize the piano and percussion notes and chords together
 
-        # Test printing
+        #find shortest duration and longest time in each stream to dermine the lowest sample rate
+        #which is used to create the synchronized array sizes
+        piano_smallest_interval = min([x['durationSeconds'] for x in piano_stream.secondsMap])
+        percussion_smallest_interval = min([x['durationSeconds'] for x in percussion_stream.secondsMap])
+        smallest_interval = min(piano_smallest_interval,percussion_smallest_interval)
+
+        highest_time = max(piano_stream.highestTime, percussion_stream.highestTime)
+
+        note_array_percussion = [0] * round(highest_time/smallest_interval)
+        note_array_piano = [0] * round(highest_time/smallest_interval)
+
+        #put each note or chord into the array based on their offsets
         for i in range(len(piano_stream)):
-            print(piano_stream[i].offset)
-            print(piano_stream[i])
-        print("________________________________________________________________________________________________________________________________________________")
+            note_array_piano[round(piano_stream[i].offset/smallest_interval)] = piano_stream[i]
         for i in range(len(percussion_stream)):
-            print(percussion_stream[i].offset)
-            print(percussion_stream[i])
-        print("tst")
+            note_array_percussion[round(percussion_stream[i].offset/smallest_interval)] = percussion_stream[i]
+
+        #insert normalizing code here using the notes and found in the chosen downsampleed dataset
         continue
     else:
         continue
