@@ -32,8 +32,13 @@ for filename in os.listdir(directory):
             note_array_piano[round(piano_stream[i].offset/smallest_interval)] = piano_stream[i]
         for i in range(len(percussion_stream)):
             note_array_percussion[round(percussion_stream[i].offset/smallest_interval)] = percussion_stream[i]
+        
+        #printing for testing
+        #they seem to sync up!
+        # for i in range(len(note_array_percussion)):
+        #     print(str(note_array_piano[i]) + "|" + str(note_array_percussion[i]) + "\n")
 
-        #insert normalizing code here using the notes and found in the chosen downsampleed dataset
+        #insert normalizing code here using the notes and found in the chosen downsampled dataset
         continue
     else:
         continue
