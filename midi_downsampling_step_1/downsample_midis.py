@@ -1,15 +1,42 @@
+#run "nohup python midi_downsampling_step_1/downsample_midis.py &" on the server to run the script on the full dataset
+# the output will be written to nohup.out at the top level project directory 
+
 from music21 import *
 import os
 import time
 import sys
+import signal
+ 
+def test_request(arg=None):
+    """Your http request."""
+    time.sleep(2)
+    return arg
+ 
+class Timeout():
+    """Timeout class using ALARM signal."""
+    class Timeout(Exception):
+        pass
+ 
+    def __init__(self, sec):
+        self.sec = sec
+ 
+    def __enter__(self):
+        signal.signal(signal.SIGALRM, self.raise_timeout)
+        signal.alarm(self.sec)
+ 
+    def __exit__(self, *args):
+        signal.alarm(0)    # disable alarm
+ 
+    def raise_timeout(self, *args):
+        raise Timeout.Timeout()
 
-#converts all midi files in the midi_downsampling/src_midis to simpler version (2 tracks, one piano one percussion)
-#and stores them into midi_downsampling/dst_midis
+#converts all midi files in the midi_downsampling_step_1/src_midis to simpler version (2 tracks, one piano one percussion)
+#and stores them into midi_downsampling_step_1/dst_midis
 
-directory = "midi_downsampling/src_midis"
+directory = "midi_downsampling_step_1/src_midis"
 
 def downsample(filename):
-    filepath = "midi_downsampling/src_midis/" + filename
+    filepath = "midi_downsampling_step_1/src_midis/" + filename
 
     parsed_midi = midi.MidiFile()
     parsed_midi.open(filepath, "rb")
@@ -53,20 +80,24 @@ def downsample(filename):
     outFile.tracks[0].setChannel(1)
     outFile.tracks[1].setChannel(10)
 
-    outFile.open('midi_downsampling/dst_midis/' + filename, "wb")
+    outFile.open('midi_downsampling_step_1/dst_midis/' + filename, "wb")
     outFile.write()
     outFile.close()
 
 start = time.time()
 filenames = os.listdir(directory)
-total = len(filenames)
+total = len(filenames) - 1
 count = 0
 for filename in filenames:
     if filename.endswith(".mid"):
         count += 1
         sys.stdout.write("\r" + str(count) + "/" + str(total))
         sys.stdout.flush()
-        downsample(filename)
+        try:
+            with Timeout(20):
+                downsample(filename)
+        except:
+            print("skip!")
         continue
     else:
         continue
