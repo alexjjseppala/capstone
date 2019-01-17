@@ -175,11 +175,11 @@ for filename in filenames:
         count += 1
         sys.stdout.write("\r" + str(count) + "/" + str(total))
         sys.stdout.flush()
-        # try:
-        #     with Timeout(90):
-        preprocess(filename)
-        # except:
-        #     print("skipping " + str(filename))
+        try:
+            with Timeout(90):
+                preprocess(filename)
+        except:
+            print("skipping " + str(filename))
         continue
     else:
         continue
