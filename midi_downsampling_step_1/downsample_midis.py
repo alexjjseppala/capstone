@@ -46,43 +46,47 @@ def downsample(filename):
 
     piano_tracks = []
     percussion_tracks = []
-    for track in range(len(parsed_midi_tracks)):
-        channels = parsed_midi_tracks[track].getChannels()
-        if 10 in channels:
-            percussion_tracks.append(parsed_midi_tracks[track])
-        else:
-            piano_tracks.append(parsed_midi_tracks[track])
-    
-    outStream = stream.Stream()
-    piano_notes = []
-    percussion_notes = []
-    if len(piano_tracks) > 0:
-        piano_stream = midi.translate.midiTracksToStreams(piano_tracks)
-        piano_notes = piano_stream.flat.notesAndRests
-    if len(percussion_tracks) > 0:
-        percussion_stream = midi.translate.midiTracksToStreams(percussion_tracks)
-        percussion_notes = percussion_stream.flat.notesAndRests
-    
-    #in theory the normalization and training could be done here
-    #or this script could be run to pre-simplify the midi files first
+    #removing single track songs with percussion
+    if len(parsed_midi_tracks) == 1 and 10 in parsed_midi_tracks[0].getChannels():
+        print("skip!")
+    else:
+        for track in range(len(parsed_midi_tracks)):
+            channels = parsed_midi_tracks[track].getChannels()
+            if 10 in channels:
+                percussion_tracks.append(parsed_midi_tracks[track])
+            else:
+                piano_tracks.append(parsed_midi_tracks[track])
+        
+        outStream = stream.Stream()
+        piano_notes = []
+        percussion_notes = []
+        if len(piano_tracks) > 0:
+            piano_stream = midi.translate.midiTracksToStreams(piano_tracks)
+            piano_notes = piano_stream.flat.notesAndRests
+        if len(percussion_tracks) > 0:
+            percussion_stream = midi.translate.midiTracksToStreams(percussion_tracks)
+            percussion_notes = percussion_stream.flat.notesAndRests
+        
+        #in theory the normalization and training could be done here
+        #or this script could be run to pre-simplify the midi files first
 
-    outStream.append(stream.Part(piano_notes))
-    outStream.append(stream.Part(percussion_notes))
+        outStream.append(stream.Part(piano_notes))
+        outStream.append(stream.Part(percussion_notes))
 
-    # outStream[0].chordify()
-    # outStream[1].chordify()
+        # outStream[0].chordify()
+        # outStream[1].chordify()
 
-    # outStream[0] = outStream[0].flat
-    # outStream[1] = outStream[1].flat
+        # outStream[0] = outStream[0].flat
+        # outStream[1] = outStream[1].flat
 
-    outFile = midi.translate.streamToMidiFile(outStream)
+        outFile = midi.translate.streamToMidiFile(outStream)
 
-    outFile.tracks[0].setChannel(1)
-    outFile.tracks[1].setChannel(10)
+        outFile.tracks[0].setChannel(1)
+        outFile.tracks[1].setChannel(10)
 
-    outFile.open('midi_downsampling_step_1/dst_midis/' + filename, "wb")
-    outFile.write()
-    outFile.close()
+        outFile.open('midi_downsampling_step_1/dst_midis/' + filename, "wb")
+        outFile.write()
+        outFile.close()
 
 start = time.time()
 filenames = os.listdir(directory)

@@ -1,11 +1,20 @@
 from music21 import *
 import os
+import sys
+import time
 import numpy as np
 import pickle
 
 directory = "midi_downsampling_step_1/dst_midis"
 
-for filename in os.listdir(directory):
+start = time.time()
+filenames = os.listdir(directory)
+total = len(filenames) - 1
+count = 0
+for filename in filenames:
+    sys.stdout.write("\r" + str(count) + "/" + str(total))
+    count += 1
+    sys.stdout.flush()
     if filename.endswith(".mid"):
         parsed_midi = converter.parse('midi_downsampling_step_1/dst_midis/' + filename)
 
@@ -34,7 +43,7 @@ for filename in os.listdir(directory):
         for i in range(len(percussion_stream)):
             note_array_percussion[round(percussion_stream[i].offset/smallest_interval)] = percussion_stream[i]
 
-        with open(r"make_notes_dictionary_step_2/notes_dictionary.txt", "rb") as input_file:
+        with open(r"make_notes_dictionary_step_2/notes_dictionary", "rb") as input_file:
             notes_dictionary = pickle.load(input_file)
 
         nn_normalized_input = []
@@ -52,9 +61,11 @@ for filename in os.listdir(directory):
                     percussion_pitches += " "
             nn_normalized_input.append(notes_dictionary.index((piano_pitches,percussion_pitches)) / float(len(notes_dictionary)))
         
+        with open("make_notes_dictionary_step_3/pickled_input_midis/pickled" + filename, "wb") as fp:   #Pickling
+            pickle.dump(nn_normalized_input, fp)
         #printing for testing
-        for i in range(len(note_array_percussion)):
-            print(str(note_array_piano[i]) + " " + str(note_array_percussion[i]) + " = " + str(nn_normalized_input[i]) + " = " + str(notes_dictionary[int(nn_normalized_input[i] * len(notes_dictionary))]) + "\n")
+        # for i in range(len(note_array_percussion)):
+        #     print(str(note_array_piano[i]) + " " + str(note_array_percussion[i]) + " = " + str(nn_normalized_input[i]) + " = " + str(notes_dictionary[int(nn_normalized_input[i] * len(notes_dictionary))]) + "\n")
             # if note_array_piano[i] != 0:
             #     print()
         #insert normalizing code here using the notes found in the chosen downsampled dataset
@@ -64,3 +75,6 @@ for filename in os.listdir(directory):
         continue
     else:
         continue
+
+end = time.time()
+sys.stdout.write("\nDone!\nTime elapsed: " + str(end - start))
