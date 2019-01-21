@@ -1,2 +1,4 @@
-midi_downsampling_step_1/dst_midis/
-midi_downsampling_step_1/src_midis/
+preprocessing/src_midis/
+preprocessing/pickled_input_midis/
+.vscode
+nohup.out
