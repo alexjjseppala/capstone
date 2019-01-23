@@ -82,6 +82,11 @@ def downsample(parsed_midi_tracks):
 
     downsampled_midi.tracks[0].setChannel(1)
     downsampled_midi.tracks[1].setChannel(10)
+
+    # downsampled_midi.open('preprocessing/downsampled_midis_test/' + filename, "wb")
+    # downsampled_midi.write()
+    # downsampled_midi.close()
+
     return downsampled_midi
 
 def normalize_prep(downsampled_midi):
