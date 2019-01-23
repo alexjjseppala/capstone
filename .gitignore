@@ -1,2 +1,10 @@
+preprocessing/src_midis/
+preprocessing/pickled_input_midis/
+.vscode
+nohup.out
 midi_downsampling_step_1/dst_midis/
 midi_downsampling_step_1/src_midis/
+midi_downsampling_step_1/target.zip
+midi_downsampling_step_1/target2.zip
+preprocessing/clean_pickled_midis/
+preprocessing/used_src_midis/

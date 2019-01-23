@@ -37,6 +37,7 @@ class Timeout():
 #and stores them into midi_downsampling_step_1/dst_midis
 
 src_directory = "preprocessing/src_midis"
+dictionary_error = False
 
 def note_array_to_pitch_string(note):
     pitches = ""
@@ -89,10 +90,16 @@ def normalize_prep(downsampled_midi):
         with open('preprocessing/notes_dictionary', 'rb') as f:
             # The protocol version used is detected automatically, so we do not
             # have to specify it.
-            output_dictionary = pickle.load(f)
+            try:
+                output_dictionary = pickle.load(f)
+            except:
+                dictionary_error = True
     else:
         print("making new dictionary")
         output_dictionary = []
+    if not dictionary_error:
+        with open("preprocessing/notes_dictionary_prev", "wb") as fp:   #Pickling
+            pickle.dump(output_dictionary, fp)
 
     downsampled_midi_stream = midi.translate.midiFileToStream(downsampled_midi)
     
@@ -171,14 +178,15 @@ filenames = os.listdir(src_directory)
 total = len(filenames) - 1
 count = 0
 for filename in filenames:
-    if filename.endswith(".mid"):
+    if filename.endswith(".mid") and not dictionary_error:
         count += 1
         sys.stdout.write("\r" + str(count) + "/" + str(total))
         sys.stdout.flush()
         try:
             with Timeout(90):
                 preprocess(filename)
-        except:
+        except Exception as e:
+            print(e)
             print("skipping " + str(filename))
         continue
     else:
