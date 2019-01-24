@@ -125,16 +125,21 @@ def normalize_prep(downsampled_midi):
         for i in range(len(percussion_stream)):
             note_array_percussion[round(percussion_stream[i].offset/smallest_interval)] = percussion_stream[i]
     nn_normalized_input = []
+    cache = {}
     if len(downsampled_midi_stream) == 2:
         for i in range(len(note_array_percussion)):
                 #construct the dictionary tuple
                 piano_pitches = note_array_to_pitch_string(note_array_piano[i])
                 percussion_pitches = note_array_to_pitch_string(note_array_percussion[i])
-                if (piano_pitches,percussion_pitches) in output_dictionary:
+                if (piano_pitches,percussion_pitches) in cache:
+                    dictionary_index = cache[(piano_pitches,percussion_pitches)]
+                elif (piano_pitches,percussion_pitches) in output_dictionary:
                     dictionary_index = output_dictionary.index((piano_pitches,percussion_pitches))
+                    cache[(piano_pitches,percussion_pitches)] = dictionary_index
                 else:
                     output_dictionary.append((piano_pitches,percussion_pitches))
                     dictionary_index = len(output_dictionary) - 1
+                    cache[(piano_pitches,percussion_pitches)] = dictionary_index
                 
                 nn_normalized_input.append(dictionary_index) #turn into float with dictionary index later
     else:
@@ -142,11 +147,15 @@ def normalize_prep(downsampled_midi):
             #construct the dictionary tuple
             piano_pitches = note_array_to_pitch_string(note_array_piano[i])
             percussion_pitches = ""
-            if (piano_pitches,percussion_pitches) in output_dictionary:
+            if (piano_pitches,percussion_pitches) in cache:
+                dictionary_index = cache[(piano_pitches,percussion_pitches)]
+            elif (piano_pitches,percussion_pitches) in output_dictionary:
                 dictionary_index = output_dictionary.index((piano_pitches,""))
+                cache[(piano_pitches,percussion_pitches)] = dictionary_index
             else:
                 output_dictionary.append((piano_pitches,percussion_pitches))
                 dictionary_index = len(output_dictionary) - 1
+                cache[(piano_pitches,percussion_pitches)] = dictionary_index
             
             nn_normalized_input.append(dictionary_index) #turn into float with dictionary index later
 
